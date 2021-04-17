@@ -29,6 +29,72 @@ $(function () {
         $("#icone_clima").css("background-image", "url('" + weatherObject.icone_clima + "')");
 
     }
+
+    function gerarGrafico(horas, temperaturas){
+
+        Highcharts.chart('hourly_chart', {
+            chart: {
+                type: 'line'
+            },
+            title: {
+                text: 'Temperatura Hora a Hora'
+            },
+            xAxis: {
+                categories: horas
+            },
+            yAxis: {
+                title: {
+                    text: 'Temperatura (°C)'
+                }
+            },
+            plotOptions: {
+                line: {
+                    dataLabels: {
+                        enabled: true
+                    },
+                    enableMouseTracking: false
+                }
+            },
+            series: [{
+                showInLegend: false,
+                data: temperaturas
+            }]
+        });
+    }
+    
+
+    function pegarPrevisãoHoraAHora(localCode){
+        //"http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/28143?apikey=H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A&language=pt-BR&metric=true"
+
+        $.ajax({
+            url: "http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/" + localCode + "?apikey=" + accuweatherAPIkey + "&language=pt-BR&metric=true",
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                console.log("hourly forecast: ", data);
+
+                var horarios = [];
+                var temperaturas= [];
+
+                for(var a = 0; a < data.length; a++){
+
+                    var hora = new Date(data[a].DateTime).getHours();
+                    horarios.push(String(hora) + "h");
+                    temperaturas.push(data[a].Temperature.Value);
+
+                    gerarGrafico(horarios, temperaturas);
+                }
+
+            },
+            error: function () {
+                console.log("erro")
+            }
+
+        });
+
+
+
+    }
     function preencherPrevisao5Dias(previsoes){
 
         $("#info_5dias").html("");
@@ -137,6 +203,7 @@ $(function () {
 
                 pegarTempoAtual(localCode);
                 pegarPrevisao5dias(localCode);
+                pegarPrevisãoHoraAHora(localCode)
 
             },
             error: function () {
@@ -172,7 +239,7 @@ $(function () {
         });
 
     }
-    pegarCoordenadasIP();
+   pegarCoordenadasIP();
 });
 
 
