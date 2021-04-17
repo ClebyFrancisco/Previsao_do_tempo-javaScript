@@ -15,19 +15,78 @@ $(function () {
         cidade: "",
         estado: "",
         pais: "",
-        temperatura:"",
-        texto_clima:"",
-        icone_clima:" "
+        temperatura: "",
+        texto_clima: "",
+        icone_clima: " "
 
     };
 
-    function preencherClimaAgora(cidade, estado, pais, temperatura, texto_clima, icone_clima){
-        var texto_local = cidade +", " + estado + ". "+ pais;
+    function preencherClimaAgora(cidade, estado, pais, temperatura, texto_clima, icone_clima) {
+        var texto_local = cidade + ", " + estado + ". " + pais;
         $("#texto_local").text(texto_local);
         $("#texto_clima").text(texto_clima);
-        $("#texto_temperatura").html( String(temperatura) + "&deg;");
-        $("#icone_clima").css("background-image", "url('"+ weatherObject.icone_clima +"')");
+        $("#texto_temperatura").html(String(temperatura) + "&deg;");
+        $("#icone_clima").css("background-image", "url('" + weatherObject.icone_clima + "')");
 
+    }
+    function preencherPrevisao5Dias(previsoes){
+
+        $("#info_5dias").html("");
+
+        var diasSemanas = ["Domingo", "Segunda-Feira","Terça-Feira","Quarta-Feira","Quinta-Feira","Sexta-Feira","Sabado", ]
+
+        for( var a = 0; a< previsoes.length; a++){
+
+            var dataHoje = new Date(previsoes[a].Date);
+            var dia_semana = diasSemanas[ dataHoje.getDay() ];
+
+            var iconNumber = previsoes[a].Day.Icon <= 9 ? "0" + String(previsoes[a].Day.Icon) : String(previsoes[a].Day.Icon);
+
+            iconeClima = "https://developer.accuweather.com/sites/default/files/" + iconNumber + "-s.png";
+
+            maxima = String(previsoes[a].Temperature.Maximum.Value);
+            minima = String(previsoes[a].Temperature.Minimum.Value);
+
+            elementoHTMLDia = '<div class="day col">';
+            elementoHTMLDia +=   '<div class="day_inner">';
+            elementoHTMLDia +=     '<div class="dayname">';
+            elementoHTMLDia +=         dia_semana;
+            elementoHTMLDia +=     '</div>';
+            elementoHTMLDia +=   '<div style="background-image: url(\''+ iconeClima +'\')" class="daily_weather_icon"></div>';
+            elementoHTMLDia +=     '<div class="max_min_temp">';
+            elementoHTMLDia +=         minima + '&deg; / '+ maxima + '&deg;';
+            elementoHTMLDia +=     '</div>';
+            elementoHTMLDia += '</div>';
+            elementoHTMLDia += '</div>';
+
+            $("#info_5dias").append(elementoHTMLDia);
+            elementoHTMLDia = "";
+
+
+        }
+
+    }
+
+    function pegarPrevisao5dias(localCode) {
+        //"http://dataservice.accuweather.com/forecasts/v1/daily/5day/28143?apikey=H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A&language=pt-BR"
+
+        $.ajax({
+            url: "http://dataservice.accuweather.com/forecasts/v1/daily/5day/" + localCode + "?apikey=" + accuweatherAPIkey + "&language=pt-BR&metric=true",
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                console.log("5  days forecast: ", data);
+
+                $("#texto_max_min").html( String(data.DailyForecasts[0].Temperature.Minimum.Value) + "&deg; /" + String(data.DailyForecasts[0].Temperature.Maximum.Value)+ "&deg;");
+
+                preencherPrevisao5Dias(data.DailyForecasts);
+
+            },
+            error: function () {
+                console.log("erro")
+            }
+
+        });
     }
 
     function pegarTempoAtual(localCode) {
@@ -37,14 +96,14 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("curent condicions: ",data);
+                console.log("curent condicions: ", data);
 
                 weatherObject.temperatura = data[0].Temperature.Metric.Value;
                 weatherObject.texto_clima = data[0].WeatherText;
 
                 var iconNumber = data[0].WeatherIcon <= 9 ? "0" + String(data[0].WeatherIcon) : String(data[0].WeatherIcon);
 
-                weatherObject.icone_clima = "https://developer.accuweather.com/sites/default/files/"+ iconNumber +"-s.png";
+                weatherObject.icone_clima = "https://developer.accuweather.com/sites/default/files/" + iconNumber + "-s.png";
 
                 preencherClimaAgora(weatherObject.cidade, weatherObject.estado, weatherObject.pais, weatherObject.temperatura, weatherObject.texto_clima, weatherObject.icone_clima);
 
@@ -63,11 +122,11 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("geoposion: ",data);
+                console.log("geoposion: ", data);
 
-                try{
+                try {
                     weatherObject.cidade = data.ParentCity.LocalizedName;
-                }catch{
+                } catch {
                     weatherObject.cidade = data.LocalizedName;
                 }
 
@@ -75,7 +134,9 @@ $(function () {
                 weatherObject.pais = data.Country.LocalizedName;
 
                 var localCode = data.Key;
+
                 pegarTempoAtual(localCode);
+                pegarPrevisao5dias(localCode);
 
             },
             error: function () {
@@ -84,7 +145,7 @@ $(function () {
 
         });
     }
-    
+
 
     function pegarCoordenadasIP() {
         var lat_padrao = -8.047547;
@@ -96,16 +157,16 @@ $(function () {
             dataType: "json",
             success: function (data) {
 
-                if(data.geoplugin_latitude && data.geoplugin_longitude){
-                    pegarLocalUsuario(data.geoplugin_latitude,data.geoplugin_longitude);
-                }else{
-                    pegarLocalUsuario(lat_padrao,long_padrao);
+                if (data.geoplugin_latitude && data.geoplugin_longitude) {
+                    pegarLocalUsuario(data.geoplugin_latitude, data.geoplugin_longitude);
+                } else {
+                    pegarLocalUsuario(lat_padrao, long_padrao);
                 }
-                
+
             },
             error: function () {
                 console.log("erro");
-                pegarLocalUsuario(lat_padrao,long_padrao);
+                pegarLocalUsuario(lat_padrao, long_padrao);
             }
 
         });
