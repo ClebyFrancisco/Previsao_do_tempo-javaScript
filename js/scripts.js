@@ -26,6 +26,7 @@ $(function () {
         $("#texto_local").text(texto_local);
         $("#texto_clima").text(texto_clima);
         $("#texto_temperatura").html( String(temperatura) + "&deg;");
+        $("#icone_clima").css("background-image", "url('"+ weatherObject.icone_clima +"')");
 
     }
 
@@ -40,7 +41,10 @@ $(function () {
 
                 weatherObject.temperatura = data[0].Temperature.Metric.Value;
                 weatherObject.texto_clima = data[0].WeatherText;
-                weatherObject.icone_clima = "";
+
+                var iconNumber = data[0].WeatherIcon <= 9 ? "0" + String(data[0].WeatherIcon) : String(data[0].WeatherIcon);
+
+                weatherObject.icone_clima = "https://developer.accuweather.com/sites/default/files/"+ iconNumber +"-s.png";
 
                 preencherClimaAgora(weatherObject.cidade, weatherObject.estado, weatherObject.pais, weatherObject.temperatura, weatherObject.texto_clima, weatherObject.icone_clima);
 
