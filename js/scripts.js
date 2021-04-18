@@ -9,7 +9,8 @@ $(function () {
     // gerar gráficos em JS: https://www.highcharts.com/demo
 
     //http://dataservice.accuweather.com/currentconditions/v1/28143?apikey=H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A&language=pt-BR
-    var accuweatherAPIkey = "H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A"
+    var accuweatherAPIkey = "H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A";
+    var mapBoxToken = "pk.eyJ1IjoiY2xlYnlmcmFuY2lzY28iLCJhIjoiY2tubjZveWdlMHc4dDJ2bW9zOXJiZnh4ZiJ9.-b7qgPy74Yd08o1FC42U6Q";
 
     var weatherObject = {
         cidade: "",
@@ -30,14 +31,14 @@ $(function () {
 
     }
 
-    function gerarGrafico(horas, temperaturas){
+    function gerarGrafico(horas, temperaturas) {
 
         Highcharts.chart('hourly_chart', {
             chart: {
                 type: 'line'
             },
             title: {
-                text: 'Temperatura Hora a Hora'
+                text: 'Temperatura Nas Próximas 12 horas!'
             },
             xAxis: {
                 categories: horas
@@ -61,9 +62,9 @@ $(function () {
             }]
         });
     }
-    
 
-    function pegarPrevisãoHoraAHora(localCode){
+
+    function pegarPrevisãoHoraAHora(localCode) {
         //"http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/28143?apikey=H5FfZYNCOX8PJdcZrQ9bQJtaYeZXbu9A&language=pt-BR&metric=true"
 
         $.ajax({
@@ -71,23 +72,25 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("hourly forecast: ", data);
+                //console.log("hourly forecast: ", data);
 
                 var horarios = [];
-                var temperaturas= [];
+                var temperaturas = [];
 
-                for(var a = 0; a < data.length; a++){
+                for (var a = 0; a < data.length; a++) {
 
                     var hora = new Date(data[a].DateTime).getHours();
                     horarios.push(String(hora) + "h");
                     temperaturas.push(data[a].Temperature.Value);
 
                     gerarGrafico(horarios, temperaturas);
+                    $('.refresh-loader').fadeOut();
                 }
 
             },
             error: function () {
-                console.log("erro")
+                console.log("erro na previsão");
+                gerarErro("Erro ao obter a previsão nas proximas 12 horas!");
             }
 
         });
@@ -95,16 +98,16 @@ $(function () {
 
 
     }
-    function preencherPrevisao5Dias(previsoes){
+    function preencherPrevisao5Dias(previsoes) {
 
         $("#info_5dias").html("");
 
-        var diasSemanas = ["Domingo", "Segunda-Feira","Terça-Feira","Quarta-Feira","Quinta-Feira","Sexta-Feira","Sabado", ]
+        var diasSemanas = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sabado",]
 
-        for( var a = 0; a< previsoes.length; a++){
+        for (var a = 0; a < previsoes.length; a++) {
 
             var dataHoje = new Date(previsoes[a].Date);
-            var dia_semana = diasSemanas[ dataHoje.getDay() ];
+            var dia_semana = diasSemanas[dataHoje.getDay()];
 
             var iconNumber = previsoes[a].Day.Icon <= 9 ? "0" + String(previsoes[a].Day.Icon) : String(previsoes[a].Day.Icon);
 
@@ -114,14 +117,14 @@ $(function () {
             minima = String(previsoes[a].Temperature.Minimum.Value);
 
             elementoHTMLDia = '<div class="day col">';
-            elementoHTMLDia +=   '<div class="day_inner">';
-            elementoHTMLDia +=     '<div class="dayname">';
-            elementoHTMLDia +=         dia_semana;
-            elementoHTMLDia +=     '</div>';
-            elementoHTMLDia +=   '<div style="background-image: url(\''+ iconeClima +'\')" class="daily_weather_icon"></div>';
-            elementoHTMLDia +=     '<div class="max_min_temp">';
-            elementoHTMLDia +=         minima + '&deg; / '+ maxima + '&deg;';
-            elementoHTMLDia +=     '</div>';
+            elementoHTMLDia += '<div class="day_inner">';
+            elementoHTMLDia += '<div class="dayname">';
+            elementoHTMLDia += dia_semana;
+            elementoHTMLDia += '</div>';
+            elementoHTMLDia += '<div style="background-image: url(\'' + iconeClima + '\')" class="daily_weather_icon"></div>';
+            elementoHTMLDia += '<div class="max_min_temp">';
+            elementoHTMLDia += minima + '&deg; / ' + maxima + '&deg;';
+            elementoHTMLDia += '</div>';
             elementoHTMLDia += '</div>';
             elementoHTMLDia += '</div>';
 
@@ -141,15 +144,16 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("5  days forecast: ", data);
+               // console.log("5  days forecast: ", data);
 
-                $("#texto_max_min").html( String(data.DailyForecasts[0].Temperature.Minimum.Value) + "&deg; /" + String(data.DailyForecasts[0].Temperature.Maximum.Value)+ "&deg;");
+                $("#texto_max_min").html(String(data.DailyForecasts[0].Temperature.Minimum.Value) + "&deg; /" + String(data.DailyForecasts[0].Temperature.Maximum.Value) + "&deg;");
 
                 preencherPrevisao5Dias(data.DailyForecasts);
 
             },
             error: function () {
-                console.log("erro")
+                console.log("erro na previsão 5 dias");
+                gerarErro("Erro ao obter a previsão dos proximos 5 dias!");
             }
 
         });
@@ -162,7 +166,7 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("curent condicions: ", data);
+                //console.log("curent condicions: ", data);
 
                 weatherObject.temperatura = data[0].Temperature.Metric.Value;
                 weatherObject.texto_clima = data[0].WeatherText;
@@ -175,7 +179,8 @@ $(function () {
 
             },
             error: function () {
-                console.log("erro")
+                console.log("erro clima atual");
+                gerarErro("Erro ao obter clima Atual!");
             }
 
         });
@@ -188,7 +193,7 @@ $(function () {
             type: "GET",
             dataType: "json",
             success: function (data) {
-                console.log("geoposion: ", data);
+               // console.log("geoposion: ", data);
 
                 try {
                     weatherObject.cidade = data.ParentCity.LocalizedName;
@@ -207,12 +212,55 @@ $(function () {
 
             },
             error: function () {
-                console.log("erro")
+                console.log("erro ao pegar local do usuario");
+                gerarErro("Erro no código do local!");
             }
 
         });
     }
+    function pegarCoordenadasDaPesquisa(input) {
 
+        input = encodeURI(input);
+
+        $.ajax({
+            url: "https://api.mapbox.com/geocoding/v5/mapbox.places/" + input + ".json?access_token=" + mapBoxToken,
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                //console.log("mapBox: ", data);
+
+                try {
+
+                    var long = data.features[0].geometry.coordinates[0];
+                    var lat = data.features[0].geometry.coordinates[1];
+                    pegarLocalUsuario(lat, long);
+                } catch {
+                    gerarErro("Erro na pesquisa do local!");
+                }
+
+            },
+            error: function () {
+                console.log("erro na pesquisa do local");
+
+                gerarErro("Erro na pesquisa do local!");
+            }
+
+        });
+    }
+    function gerarErro(mensagem) {
+
+        if (!mensagem) {
+            mensagem = "Erro na Solicitação!"
+        }
+        $('.refresh-loader').hide();
+        $("#aviso-erro").text(mensagem);
+        $("#aviso-erro").slideDown();
+        window.setTimeout(function () {
+            $("#aviso-erro").slideUp();
+        }, 4000);
+
+
+    }
 
     function pegarCoordenadasIP() {
         var lat_padrao = -8.047547;
@@ -239,7 +287,31 @@ $(function () {
         });
 
     }
-   pegarCoordenadasIP();
+    pegarCoordenadasIP();
+
+    $("#search-button").click(function () {
+        $('.refresh-loader').show();
+        var local = $("input#local").val();
+
+        if (local) {
+            pegarCoordenadasDaPesquisa(local);
+        } else {
+            alert("local invalido!");
+        }
+    });
+
+    $("input#local").on('keypress', function (e) {
+        if (e.which == 13) {
+            $('.refresh-loader').show();
+            var local = $("input#local").val();
+
+            if (local) {
+                pegarCoordenadasDaPesquisa(local);
+            } else {
+                alert("local invalido!");
+            }
+        }
+    });
 });
 
 
